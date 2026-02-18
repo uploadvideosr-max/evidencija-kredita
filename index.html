@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVIDENCIJA KUPOVINE KREDITA</title>
+<style>
+/* -- STYLING ISTO KAO PRE -- */
+body{font-family: Arial, sans-serif; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); color:white; padding:20px;}
+.container{max-width:1200px; margin:auto; background:rgba(0,0,0,0.4); padding:20px; border-radius:10px;}
+.logo{display:block; margin:auto; width:120px; margin-bottom:20px;}
+h2{text-align:center;}
+form{display:flex; gap:10px; margin-bottom:20px; align-items:center; flex-wrap: wrap;}
+form input, form select{flex:1; padding:10px; border-radius:5px; border:none;}
+form button{padding:10px 25px; border-radius:5px; border:none; background:#00c6ff; color:white; cursor:pointer; font-weight:bold;}
+form button:hover{background:#0072ff;}
+#stampajBtn{margin-bottom:20px; padding:10px 20px; border:none; border-radius:5px; background:#ff69b4; color:white; cursor:pointer; font-weight:bold;}
+#stampajBtn:hover{background:#ff1493;}
+table{width:100%; border-collapse:collapse; background:white; color:black;}
+th, td{padding:10px; border:1px solid #ccc; text-align:center;}
+th{background:#0072ff; color:white;}
+.delete-btn{background:red; color:white; border:none; padding:5px 10px; cursor:pointer;}
+.delete-btn:hover{background:darkred;}
+td.napomena{width:200px; max-width:200px;}
+td.napomena div{font-size:13px; line-height:16px; height:32px; overflow:hidden; word-break:break-word; text-align:left;}
+@media print{body *{visibility:hidden;} table, table *{visibility:visible;} table{position:absolute; left:0; top:0; width:100%;}}
+#loginOverlay{position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; z-index:9999; flex-direction:column;}
+#loginOverlay input{padding:10px; font-size:16px; margin-bottom:10px; border-radius:5px; border:none;}
+#loginOverlay button{padding:10px 25px; border:none; border-radius:5px; background:#00c6ff; color:white; cursor:pointer; font-weight:bold;}
+#loginOverlay button:hover{background:#0072ff;}
+</style>
+</head>
+<body>
+
+<div id="loginOverlay">
+  <h2>Unesite lozinku</h2>
+  <input type="password" id="passwordInput" placeholder="Lozinka">
+  <button id="loginBtn">Prijavi se</button>
+</div>
+
+<div class="container" style="display:none">
+<img src="logo.png" class="logo" onerror="this.style.display='none'">
+<h2>EVIDENCIJA KUPOVINE KREDITA</h2>
+
+<form id="forma">
+<select id="paket" required>
+<option value="">Izaberite paket</option>
+</select>
+<input type="text" id="noviPaket" placeholder="Dodaj novi paket">
+<input type="date" id="datum" required>
+<input type="number" id="kredit" placeholder="Broj kredita" required>
+<select id="status" required>
+<option value="">Status</option>
+<option value="Plaćeno">Plaćeno</option>
+<option value="Dugovanje">Dugovanje</option>
+</select>
+<input type="number" id="cena" placeholder="Cena" required>
+<select id="placanje" required>
+<option value="">Način plaćanja</option>
+<option value="PayPal">PayPal</option>
+<option value="Banka">Banka</option>
+<option value="Pošta">Pošta</option>
+</select>
+<input type="text" id="napomena" placeholder="Napomena">
+<button type="submit">Dodaj</button>
+</form>
+
+<button id="stampajBtn">Štampaj tabelu</button>
+
+<table>
+<thead>
+<tr>
+<th>PAKET</th>
+<th>DATUM</th>
+<th>BROJ KREDITA</th>
+<th>STATUS</th>
+<th>CENA</th>
+<th>NAČIN PLAĆANJA</th>
+<th>NAPOMENA</th>
+<th>OBRIŠI</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+</div>
+
+<script>
+// LOZINKA (možete promeniti ovde)
+let lozinka="1234";
+
+document.getElementById("loginBtn").addEventListener("click",function(){
+  let unos=document.getElementById("passwordInput").value;
+  if(unos===lozinka){
+    document.getElementById("loginOverlay").style.display="none";
+    document.querySelector(".container").style.display="block";
+  } else{ alert("Pogrešna lozinka"); }
+});
+
+// paketi
+let listaPaketa=["START","MAX","MAX DUO","MAX MEGA"];
+let paketSelect=document.getElementById("paket");
+let noviPaketInput=document.getElementById("noviPaket");
+
+function osveziPakete(){
+  paketSelect.innerHTML='<option value="">Izaberite paket</option>';
+  listaPaketa.forEach(p=>{
+    let option=document.createElement("option");
+    option.value=p; option.textContent=p;
+    paketSelect.appendChild(option);
+  });
+}
+osveziPakete();
+
+// localStorage
+let podaci=JSON.parse(localStorage.getItem("paketi")) || [];
+function sacuvaj(){ localStorage.setItem("paketi",JSON.stringify(podaci)); }
+function prikazi(){
+  let tabela=document.getElementById("tabela");
+  tabela.innerHTML="";
+  podaci.forEach((p,index)=>{
+    tabela.innerHTML+=`
+<tr>
+<td>${p.paket}</td>
+<td>${p.datum}</td>
+<td>${p.kredit}</td>
+<td>${p.status}</td>
+<td>${p.cena}</td>
+<td>${p.placanje}</td>
+<td class="napomena" title="${p.napomena || ""}"><div>${p.napomena || ""}</div></td>
+<td><button class="delete-btn" onclick="obrisi(${index})">X</button></td>
+</tr>`;
+  });
+}
+
+function obrisi(index){
+  if(confirm("Obrisati zapis?")){
+    podaci.splice(index,1);
+    sacuvaj();
+    prikazi();
+  }
+}
+
+// input
+let paketInput=document.getElementById("paket");
+let datumInput=document.getElementById("datum");
+let kreditInput=document.getElementById("kredit");
+let statusInput=document.getElementById("status");
+let cenaInput=document.getElementById("cena");
+let placanjeInput=document.getElementById("placanje");
+let napomenaInput=document.getElementById("napomena");
+
+// submit
+document.getElementById("forma").addEventListener("submit",function(e){
+  e.preventDefault();
+  if(noviPaketInput.value.trim()!=""){
+    listaPaketa.push(noviPaketInput.value.trim());
+    osveziPakete();
+    paketInput.value=noviPaketInput.value.trim();
+    noviPaketInput.value="";
+  }
+  let novi={
+    paket:paketInput.value,
+    datum:datumInput.value,
+    kredit:kreditInput.value,
+    status:statusInput.value,
+    cena:cenaInput.value,
+    placanje:placanjeInput.value,
+    napomena:napomenaInput.value
+  };
+  podaci.push(novi);
+  sacuvaj();
+  prikazi();
+  this.reset();
+});
+
+// stampaj
+document.getElementById("stampajBtn").addEventListener("click",function(){ window.print(); });
+prikazi();
+</script>
+
+</body>
+</html>
